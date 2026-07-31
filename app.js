@@ -200,6 +200,41 @@ function renderTudo() {
   renderCategorias(porCategoria);
 }
 
+// Status da conexão do WhatsApp (bot rodando no mesmo servidor que serve o site)
+async function atualizarStatusWhatsapp() {
+  const statusEl = document.getElementById('whatsappStatus');
+  const statusTextEl = document.getElementById('whatsappStatusText');
+  const qrWrap = document.getElementById('whatsappQrWrap');
+  const qrImg = document.getElementById('whatsappQrImg');
+
+  try {
+    const resp = await fetch('/status-whatsapp');
+    const data = await resp.json();
+
+    if (data.conectado) {
+      statusEl.className = 'whatsapp-status conectado';
+      statusTextEl.textContent = 'Conectado';
+      qrWrap.hidden = true;
+    } else if (data.qr) {
+      statusEl.className = 'whatsapp-status pendente';
+      statusTextEl.textContent = 'Aguardando leitura do QR code';
+      qrImg.src = data.qr;
+      qrWrap.hidden = false;
+    } else {
+      statusEl.className = 'whatsapp-status';
+      statusTextEl.textContent = 'Iniciando conexão…';
+      qrWrap.hidden = true;
+    }
+  } catch (err) {
+    statusEl.className = 'whatsapp-status pendente';
+    statusTextEl.textContent = 'Bot indisponível (rode "npm start" no servidor)';
+    qrWrap.hidden = true;
+  }
+}
+
+atualizarStatusWhatsapp();
+setInterval(atualizarStatusWhatsapp, 4000);
+
 // Autenticação anônima — necessária porque as regras do Firestore exigem
 // "request.auth != null". Só depois de logado é que o site consegue ler/escrever.
 onAuthStateChanged(auth, (user) => {
