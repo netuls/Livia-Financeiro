@@ -367,6 +367,56 @@ input:focus-visible {
   text-align: right;
 }
 
+/* WhatsApp panel */
+
+.whatsapp-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-desk-muted);
+}
+
+.whatsapp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-desk-muted);
+  flex-shrink: 0;
+}
+
+.whatsapp-status.conectado .whatsapp-dot {
+  background: var(--green);
+}
+
+.whatsapp-status.conectado #whatsappStatusText {
+  color: var(--text-desk);
+}
+
+.whatsapp-status.pendente .whatsapp-dot {
+  background: var(--red);
+}
+
+.whatsapp-qr-wrap {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.whatsapp-qr-wrap img {
+  width: 100%;
+  max-width: 200px;
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px;
+}
+
+.whatsapp-qr-hint {
+  margin: 10px 0 0;
+  font-size: 0.72rem;
+  color: var(--text-desk-muted);
+  line-height: 1.4;
+}
+
 /* Modal */
 
 .modal {
