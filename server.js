@@ -1,0 +1,130 @@
+require('dotenv').config();
+
+const path = require('path');
+const express = require('express');
+
+const {
+  default: makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason,
+  fetchLatestBaileysVersion,
+} = require('@whiskeysockets/baileys');
+const qrcode = require('qrcode-terminal');
+const pino = require('pino');
+
+const { parseGasto } = require('./parser');
+const { salvarGasto } = require('./firebase');
+
+const PORT = process.env.PORT || 3000;
+
+const NUMEROS_AUTORIZADOS = (process.env.NUMEROS_AUTORIZADOS || '')
+  .split(',')
+  .map((n) => n.trim())
+  .filter(Boolean);
+
+function numeroAutorizado(jid) {
+  if (NUMEROS_AUTORIZADOS.length === 0) return true; // sem restricao configurada
+  const numero = jid.split('@')[0];
+  return NUMEROS_AUTORIZADOS.includes(numero);
+}
+
+// ---------- Site (Express) ----------
+
+function iniciarSite() {
+  const app = express();
+
+  // Estrutura sem subpastas: servimos só os arquivos do site, um a um,
+  // pra não expor server.js, firebase.js, parser.js ou o .env pela web.
+  app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+  app.get('/index.html', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+  app.get('/style.css', (req, res) => res.sendFile(path.join(__dirname, 'style.css')));
+  app.get('/app.js', (req, res) => res.sendFile(path.join(__dirname, 'app.js')));
+  app.get('/firebase-config.js', (req, res) => res.sendFile(path.join(__dirname, 'firebase-config.js')));
+
+  app.listen(PORT, () => {
+    console.log(`Livia Financeiro no ar em http://localhost:${PORT}`);
+  });
+}
+
+// ---------- Bot do WhatsApp (Baileys) ----------
+
+async function iniciarBot() {
+  const { state, saveCreds } = await useMultiFileAuthState('./auth');
+  const { version } = await fetchLatestBaileysVersion();
+
+  const sock = makeWASocket({
+    version,
+    auth: state,
+    logger: pino({ level: 'silent' }),
+    printQRInTerminal: false,
+  });
+
+  sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect, qr } = update;
+
+    if (qr) {
+      console.log('\nEscaneie o QR code abaixo com o WhatsApp (Aparelhos conectados):\n');
+      qrcode.generate(qr, { small: true });
+    }
+
+    if (connection === 'close') {
+      const motivo = lastDisconnect?.error?.output?.statusCode;
+      const deveReconectar = motivo !== DisconnectReason.loggedOut;
+      console.log('Conexao encerrada.', motivo, 'Reconectando:', deveReconectar);
+      if (deveReconectar) iniciarBot();
+    } else if (connection === 'open') {
+      console.log('Conectado ao WhatsApp com sucesso.');
+    }
+  });
+
+  sock.ev.on('creds.update', saveCreds);
+
+  sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    if (type !== 'notify') return;
+
+    for (const msg of messages) {
+      try {
+        if (!msg.message || msg.key.fromMe) continue;
+
+        const jid = msg.key.remoteJid;
+        if (!jid || jid.endsWith('@g.us')) continue; // ignora grupos
+        if (!numeroAutorizado(jid)) continue;
+
+        const texto =
+          msg.message.conversation ||
+          msg.message.extendedTextMessage?.text ||
+          '';
+
+        if (!texto.trim()) continue;
+
+        console.log(`[mensagem recebida] ${texto}`);
+
+        const gasto = await parseGasto(texto);
+
+        if (!gasto || !gasto.valor) {
+          await sock.sendMessage(jid, {
+            text: 'Nao consegui identificar um valor nessa mensagem. Tente algo como: "agua 50" ou "mercado R$120,00".',
+          });
+          continue;
+        }
+
+        const id = await salvarGasto({ ...gasto, origem: 'whatsapp' });
+        console.log(`[gasto salvo] id=${id}`, gasto);
+
+        await sock.sendMessage(jid, {
+          text: `Registrado: ${gasto.categoria} - R$ ${gasto.valor.toFixed(2).replace('.', ',')}`,
+        });
+      } catch (err) {
+        console.error('[erro ao processar mensagem]', err);
+      }
+    }
+  });
+}
+
+// ---------- Sobe tudo junto ----------
+
+iniciarSite();
+iniciarBot().catch((err) => {
+  console.error('Falha ao iniciar o bot do WhatsApp:', err);
+  console.error('O site continua no ar, mas sem registro automatico via WhatsApp.');
+});
