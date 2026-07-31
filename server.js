@@ -9,7 +9,8 @@ const {
   DisconnectReason,
   fetchLatestBaileysVersion,
 } = require('@whiskeysockets/baileys');
-const qrcode = require('qrcode-terminal');
+const qrcodeTerminal = require('qrcode-terminal');
+const QRCode = require('qrcode');
 const pino = require('pino');
 
 const { parseGasto } = require('./parser');
@@ -28,6 +29,10 @@ function numeroAutorizado(jid) {
   return NUMEROS_AUTORIZADOS.includes(numero);
 }
 
+// Estado compartilhado entre o bot e o site, pra mostrar o QR code na pagina.
+let qrCodeImagem = null; // data URL da imagem do QR, enquanto nao conectado
+let whatsappConectado = false;
+
 // ---------- Site (Express) ----------
 
 function iniciarSite() {
@@ -40,6 +45,10 @@ function iniciarSite() {
   app.get('/style.css', (req, res) => res.sendFile(path.join(__dirname, 'style.css')));
   app.get('/app.js', (req, res) => res.sendFile(path.join(__dirname, 'app.js')));
   app.get('/firebase-config.js', (req, res) => res.sendFile(path.join(__dirname, 'firebase-config.js')));
+
+  app.get('/status-whatsapp', (req, res) => {
+    res.json({ conectado: whatsappConectado, qr: qrCodeImagem });
+  });
 
   app.listen(PORT, () => {
     console.log(`Livia Financeiro no ar em http://localhost:${PORT}`);
@@ -59,20 +68,26 @@ async function iniciarBot() {
     printQRInTerminal: false,
   });
 
-  sock.ev.on('connection.update', (update) => {
+  sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log('\nEscaneie o QR code abaixo com o WhatsApp (Aparelhos conectados):\n');
-      qrcode.generate(qr, { small: true });
+      console.log('\nEscaneie o QR code abaixo com o WhatsApp (Aparelhos conectados),');
+      console.log('ou acesse o site para escanear por lá:\n');
+      qrcodeTerminal.generate(qr, { small: true });
+      qrCodeImagem = await QRCode.toDataURL(qr);
+      whatsappConectado = false;
     }
 
     if (connection === 'close') {
       const motivo = lastDisconnect?.error?.output?.statusCode;
       const deveReconectar = motivo !== DisconnectReason.loggedOut;
+      whatsappConectado = false;
       console.log('Conexao encerrada.', motivo, 'Reconectando:', deveReconectar);
       if (deveReconectar) iniciarBot();
     } else if (connection === 'open') {
+      whatsappConectado = true;
+      qrCodeImagem = null;
       console.log('Conectado ao WhatsApp com sucesso.');
     }
   });
