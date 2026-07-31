@@ -29,6 +29,24 @@ function numeroAutorizado(jid) {
   return NUMEROS_AUTORIZADOS.includes(numero);
 }
 
+// Guarda os IDs das mensagens já processadas, pra evitar registrar a mesma
+// mensagem duas vezes (o WhatsApp às vezes entrega o mesmo evento mais de
+// uma vez, ou com JIDs diferentes — @s.whatsapp.net e @lid — pro mesmo id).
+const mensagensProcessadas = new Set();
+const LIMITE_CACHE_IDS = 500; // evita crescer pra sempre em memória
+
+function jaProcessada(msgId) {
+  if (!msgId) return false;
+  if (mensagensProcessadas.has(msgId)) return true;
+
+  mensagensProcessadas.add(msgId);
+  if (mensagensProcessadas.size > LIMITE_CACHE_IDS) {
+    const primeiro = mensagensProcessadas.values().next().value;
+    mensagensProcessadas.delete(primeiro);
+  }
+  return false;
+}
+
 // Estado compartilhado entre o bot e o site, pra mostrar o QR code na pagina.
 let qrCodeImagem = null; // data URL da imagem do QR, enquanto nao conectado
 let whatsappConectado = false;
@@ -99,11 +117,32 @@ async function iniciarBot() {
 
     for (const msg of messages) {
       try {
-        if (!msg.message || msg.key.fromMe) continue;
+        if (!msg.message) continue;
+
+        // Evita processar a mesma mensagem duas vezes (duplicata do WhatsApp
+        // ou entrega repetida com JID em formato diferente).
+        const msgId = msg.key.id;
+        if (jaProcessada(msgId)) continue;
 
         const jid = msg.key.remoteJid;
+        const ehMensagemParaSiMesmo = msg.key.fromMe === true;
+
+        // Debug temporário: mostra o JID real recebido e se está autorizado.
+        // Pode remover essas linhas depois de confirmar que está tudo ok.
+        console.log(
+          '[debug] jid recebido:', jid,
+          '| fromMe:', msg.key.fromMe,
+          '| autorizado (por numero):', numeroAutorizado(jid)
+        );
+
         if (!jid || jid.endsWith('@g.us')) continue; // ignora grupos
-        if (!numeroAutorizado(jid)) continue;
+
+        // Mensagens que você manda pra você mesmo (fromMe = true) sempre são
+        // liberadas, independente do formato do JID (numero@s.whatsapp.net
+        // ou numero@lid — o WhatsApp mudou o formato recentemente).
+        // Pra mensagens vindas de outros números, continua valendo a checagem
+        // de NUMEROS_AUTORIZADOS.
+        if (!ehMensagemParaSiMesmo && !numeroAutorizado(jid)) continue;
 
         const texto =
           msg.message.conversation ||
