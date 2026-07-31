@@ -1,16 +1,21 @@
 :root {
-  --desk: #0e1712;
+  --desk: #0d1712;
   --desk-alt: #142019;
-  --paper: #f6f1e4;
-  --paper-line: #ddd5bf;
-  --ink: #1f2a22;
-  --ink-muted: #6b6252;
+  --desk-deep: #08100c;
+  --paper: #f7f1e3;
+  --paper-alt: #efe7d4;
+  --paper-line: #ddd2b4;
+  --ink: #21301f;
+  --ink-muted: #6d6350;
   --green: #3d7a5c;
+  --green-deep: #2b5943;
   --green-soft: #dfe9e0;
+  --gold: #b6905b;
+  --gold-bright: #d9b877;
   --red: #b4483a;
   --text-desk: #eef2ea;
   --text-desk-muted: #9ca79c;
-  --radius: 10px;
+  --radius: 12px;
 
   --font-display: "Fraunces", serif;
   --font-body: "Inter", sans-serif;
@@ -28,18 +33,30 @@
   }
 }
 
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(61, 122, 92, 0.55); }
+  50% { box-shadow: 0 0 0 6px rgba(61, 122, 92, 0); }
+}
+
 body {
   margin: 0;
-  background: var(--desk);
+  background:
+    radial-gradient(ellipse 900px 500px at 12% -10%, rgba(182, 144, 91, 0.10), transparent 60%),
+    var(--desk);
   color: var(--text-desk);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
 .desk {
-  max-width: 1040px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
+  padding: 36px 24px 72px;
 }
 
 /* Topbar */
@@ -48,41 +65,58 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 40px;
+  margin-bottom: 44px;
+  animation: riseIn 0.5s ease both;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .brand-mark {
-  width: 10px;
-  height: 10px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 3px rgba(61, 122, 92, 0.25);
+  position: relative;
+  background: radial-gradient(circle at 33% 28%, var(--gold-bright), var(--gold) 55%, #7c5e33 100%);
+  box-shadow:
+    0 0 0 3px rgba(182, 144, 91, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1px solid rgba(13, 23, 18, 0.4);
 }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 1.1rem;
-  letter-spacing: 0.02em;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .month-switch {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   font-family: var(--font-mono);
   font-size: 0.85rem;
   color: var(--text-desk-muted);
+  background: rgba(238, 242, 234, 0.04);
+  border: 1px solid rgba(238, 242, 234, 0.08);
+  padding: 6px 10px;
+  border-radius: 999px;
 }
 
 .month-btn {
   background: none;
-  border: 1px solid rgba(238, 242, 234, 0.15);
+  border: 1px solid rgba(238, 242, 234, 0.16);
   color: var(--text-desk);
   width: 26px;
   height: 26px;
@@ -93,69 +127,92 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
 .month-btn:hover {
-  border-color: var(--green);
-  color: var(--green);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  background: rgba(182, 144, 91, 0.08);
 }
 
 .month-btn:focus-visible,
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 
 /* Hero */
 
 .hero {
-  margin-bottom: 40px;
+  position: relative;
+  margin-bottom: 44px;
+  animation: riseIn 0.6s ease 0.05s both;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  left: -80px;
+  width: 460px;
+  height: 460px;
+  background: radial-gradient(circle, rgba(182, 144, 91, 0.16), transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-label {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: var(--text-desk-muted);
 }
 
 .hero-amount {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  font-size: clamp(2.7rem, 6vw, 4.4rem);
   line-height: 1;
+  letter-spacing: -0.01em;
 }
 
 .hero-amount .currency {
-  font-size: 0.4em;
-  vertical-align: 0.4em;
-  margin-right: 6px;
-  color: var(--text-desk-muted);
+  font-size: 0.38em;
+  vertical-align: 0.42em;
+  margin-right: 8px;
+  color: var(--gold-bright);
 }
 
 .hero-rule {
   height: 1px;
-  background: linear-gradient(90deg, rgba(238, 242, 234, 0.25), transparent 70%);
-  margin: 22px 0;
+  background: linear-gradient(90deg, rgba(182, 144, 91, 0.4), transparent 70%);
+  margin: 24px 0;
 }
 
 .hero-stats {
   display: flex;
-  gap: 40px;
+  gap: 44px;
 }
 
 .hero-stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .hero-stat-value {
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: 1.12rem;
+  color: var(--text-desk);
 }
 
 .hero-stat-label {
@@ -178,26 +235,48 @@ input:focus-visible {
   }
 }
 
-/* Ledger card (paper) */
+/* Ledger card (paper, bound like a ledger book) */
 
 .ledger-card {
-  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--paper), var(--paper-alt));
   color: var(--ink);
   border-radius: var(--radius);
-  padding: 24px 24px 8px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  padding: 26px 24px 8px 36px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.38),
+    0 1px 0 rgba(255, 255, 255, 0.4) inset;
+  animation: riseIn 0.6s ease 0.1s both;
+}
+
+.ledger-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--gold) 0,
+    var(--gold) 3px,
+    transparent 3px,
+    transparent 11px
+  );
+  opacity: 0.55;
 }
 
 .ledger-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .ledger-header h2 {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 500;
   margin: 0;
 }
@@ -206,38 +285,49 @@ input:focus-visible {
   background: var(--ink);
   color: var(--paper);
   border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
+  border-radius: 7px;
+  padding: 9px 16px;
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .add-btn:hover {
-  background: var(--green);
+  background: var(--green-deep);
+}
+
+.add-btn:active {
+  transform: scale(0.97);
 }
 
 .ledger-empty {
   color: var(--ink-muted);
   font-size: 0.9rem;
-  padding: 24px 0 32px;
+  padding: 28px 0 36px;
 }
 
 .ledger-group-label {
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.11em;
   color: var(--ink-muted);
-  margin: 18px 0 6px;
+  margin: 20px 0 7px;
 }
 
 .ledger-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 9px 0;
+  gap: 9px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--paper-line);
+  transition: background 0.12s ease;
+  border-radius: 4px;
+}
+
+.ledger-row:hover {
+  background: rgba(182, 144, 91, 0.08);
 }
 
 .ledger-row:last-child {
@@ -245,7 +335,7 @@ input:focus-visible {
 }
 
 .ledger-row-categoria {
-  font-size: 0.92rem;
+  font-size: 0.93rem;
   white-space: nowrap;
 }
 
@@ -258,8 +348,9 @@ input:focus-visible {
 
 .ledger-row-valor {
   font-family: var(--font-mono);
-  font-size: 0.92rem;
+  font-size: 0.93rem;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .origem-tag {
@@ -289,38 +380,50 @@ input:focus-visible {
 .panel {
   background: var(--desk-alt);
   border-radius: var(--radius);
-  padding: 18px 20px 20px;
-  border: 1px solid rgba(238, 242, 234, 0.06);
+  padding: 20px 20px 22px;
+  border: 1px solid rgba(238, 242, 234, 0.07);
+  position: relative;
 }
+
+.side-column .panel:nth-child(1) { animation: riseIn 0.6s ease 0.15s both; }
+.side-column .panel:nth-child(2) { animation: riseIn 0.6s ease 0.2s both; }
+.side-column .panel:nth-child(3) { animation: riseIn 0.6s ease 0.25s both; }
 
 .panel h3 {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 0.95rem;
-  margin: 0 0 14px;
+  font-size: 0.96rem;
+  margin: 0 0 16px;
   color: var(--text-desk);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(182, 144, 91, 0.18);
 }
 
 .chart {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  height: 100px;
+  height: 104px;
 }
 
 .chart-bar-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   flex: 1;
 }
 
 .chart-bar {
   width: 100%;
-  background: var(--green);
+  background: linear-gradient(180deg, #4d9270, var(--green));
   border-radius: 3px 3px 0 0;
   min-height: 2px;
+  transition: opacity 0.15s ease;
+}
+
+.chart-bar-col:hover .chart-bar {
+  opacity: 0.85;
 }
 
 .chart-bar-label {
@@ -332,7 +435,7 @@ input:focus-visible {
 .categoria-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
 }
 
 .categoria-item {
@@ -358,7 +461,7 @@ input:focus-visible {
 
 .categoria-item-barra-fill {
   height: 100%;
-  background: var(--green);
+  background: linear-gradient(90deg, var(--green), #4d9270);
 }
 
 .categoria-item-valor {
@@ -372,7 +475,7 @@ input:focus-visible {
 .whatsapp-status {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   font-size: 0.85rem;
   color: var(--text-desk-muted);
 }
@@ -387,6 +490,7 @@ input:focus-visible {
 
 .whatsapp-status.conectado .whatsapp-dot {
   background: var(--green);
+  animation: pulseDot 2.2s ease-in-out infinite;
 }
 
 .whatsapp-status.conectado #whatsappStatusText {
@@ -398,23 +502,25 @@ input:focus-visible {
 }
 
 .whatsapp-qr-wrap {
-  margin-top: 14px;
+  margin-top: 16px;
   text-align: center;
 }
 
 .whatsapp-qr-wrap img {
   width: 100%;
   max-width: 200px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #fff;
-  padding: 8px;
+  padding: 10px;
+  border: 1px solid rgba(182, 144, 91, 0.35);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .whatsapp-qr-hint {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   font-size: 0.72rem;
   color: var(--text-desk-muted);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 /* Modal */
@@ -425,24 +531,38 @@ input:focus-visible {
   padding: 0;
   background: var(--paper);
   color: var(--ink);
-  width: min(360px, 90vw);
+  width: min(380px, 90vw);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
 .modal::backdrop {
-  background: rgba(14, 23, 18, 0.6);
+  background: rgba(13, 23, 18, 0.68);
+  backdrop-filter: blur(2px);
 }
 
 .modal-form {
-  padding: 24px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 15px;
+  position: relative;
+}
+
+.modal-form::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--green));
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .modal-form h3 {
   font-family: var(--font-display);
   font-weight: 500;
-  margin: 0 0 4px;
+  margin: 6px 0 4px;
 }
 
 .modal-form label {
@@ -456,11 +576,16 @@ input:focus-visible {
 .modal-form input {
   font-family: var(--font-body);
   font-size: 0.95rem;
-  padding: 9px 10px;
-  border-radius: 6px;
+  padding: 10px 11px;
+  border-radius: 7px;
   border: 1px solid var(--paper-line);
   background: #fff;
   color: var(--ink);
+  transition: border-color 0.15s ease;
+}
+
+.modal-form input:focus-visible {
+  border-color: var(--gold);
 }
 
 .modal-actions {
@@ -473,16 +598,21 @@ input:focus-visible {
 .btn-secondary,
 .btn-primary {
   border: none;
-  border-radius: 6px;
-  padding: 9px 16px;
+  border-radius: 7px;
+  padding: 10px 18px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .btn-secondary {
   background: transparent;
   color: var(--ink-muted);
+}
+
+.btn-secondary:hover {
+  color: var(--ink);
 }
 
 .btn-primary {
@@ -491,5 +621,10 @@ input:focus-visible {
 }
 
 .btn-primary:hover {
-  background: var(--green);
+  background: var(--green-deep);
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: scale(0.97);
 }
